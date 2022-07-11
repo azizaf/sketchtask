@@ -161,3 +161,13 @@ if __name__ == "__main__":
 
     print(f"\n{'*'*10}\nFiles in the production bucket")
     print_bucket_files(production_bucket)
+
+    print("\n")
+    main()
+    print("\n")
+
+    print(f"{'*'*10}\nFiles in the legacy bucket")
+    print_bucket_files(legacy_bucket)
+
+    print(f"\n{'*'*10}\nFiles in the production bucket")
+    print_bucket_files(production_bucket)
