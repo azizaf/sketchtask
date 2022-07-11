@@ -53,6 +53,30 @@ def get_connection():
 
     return connection
 
+def close_connection(connection):
+    connection.close()
+
+def fetch_files_to_copy(connection) -> list[str]:
+    SQL_QUERY = "SELECT id, path_key FROM mytable WHERE path_key LIKE 'image%'"
+
+    # Executing a SQL query
+    cursor = connection.cursor()
+    cursor.execute(SQL_QUERY)
+
+    # Fetch result
+    return cursor.fetchall()
+
+def fetch_files(connection) -> list[str]:
+    SQL_QUERY = "SELECT id, path_key FROM mytable"
+
+    # Executing a SQL query
+    cursor = connection.cursor()
+    cursor.execute(SQL_QUERY)
+
+    # Fetch result
+    return cursor.fetchall()
+
+
 
 def main():
     # check for the buckets
