@@ -92,6 +92,16 @@ def copy_object(source_bucket_name: str, source_key: str, target_bucket_name: st
     finally:
         return error
 
+def update_file_path_indb(connection, id: str, new_key: str):
+    cursor = connection.cursor()
+    query = f"""
+    UPDATE mytable 
+        SET path_key='{new_key}'
+        WHERE id={id}
+    """
+    cursor.execute(query)
+    cursor.close()
+
 def main():
     # check for the buckets
     if not bucket_exists(legacy_bucket) or not bucket_exists(production_bucket):
@@ -99,3 +109,49 @@ def main():
             "Either the legacy bucket or the production bucket does not exist")
 
     connection = get_connection()
+
+    # Get all file path from the database with a certain file path format
+    file_paths = fetch_files_to_copy(connection)
+    print(file_paths)
+
+    # For each of the files from above,
+    for file_obj in file_paths:
+        key, file_name = file_obj[1].split("/")
+
+        # Check if the file exists in the legacy bucket (false=skip)
+        if not object_exists(legacy_bucket, f"image/{file_name}"):
+            print(f"{key}/{file_name}", "does not exists in legacy")
+            continue
+
+        # Check if the file exists in the production bucket (false=skip)
+        if object_exists(production_bucket, f"avatar/{file_name}"):
+            print(f"{key}/{file_name}", "does exists in production")
+            update_file_path_indb(
+                connection, file_obj[0], f"avatar/{file_name}")
+            continue
+
+        copied = copy_object(
+            legacy_bucket, f"{key}/{file_name}", production_bucket, f"avatar/{file_name}")
+
+        print("Copied", copied)
+        if copied is not True:
+            print(f"{key}/{file_name}", "Not copied")
+            continue
+
+        # else, update the database
+        update_file_path_indb(connection, file_obj[0], f"avatar/{file_obj[1]}")
+
+    # expecting the result of this to be []
+    print("---"*10, "\n", fetch_files(connection))
+
+    # close the connection to the database
+    close_connection(connection)
+
+def print_bucket_files(bucket_name):
+    temp = client.list_objects(Bucket=bucket_name)['Contents']
+    for i in temp:
+        print(i.get('Key'))
+
+
+if __name__ == "__main__":
+    client = boto3.client("s3")
