@@ -155,3 +155,9 @@ def print_bucket_files(bucket_name):
 
 if __name__ == "__main__":
     client = boto3.client("s3")
+
+    print(f"{'*'*10}\nFiles in the legacy bucket")
+    print_bucket_files(legacy_bucket)
+
+    print(f"\n{'*'*10}\nFiles in the production bucket")
+    print_bucket_files(production_bucket)
