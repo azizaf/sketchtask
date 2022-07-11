@@ -77,6 +77,20 @@ def fetch_files(connection) -> list[str]:
     return cursor.fetchall()
 
 
+def copy_object(source_bucket_name: str, source_key: str, target_bucket_name: str, target_file_name: str) -> bool:
+    error = False
+    try:
+        bucket = s3.Bucket(target_bucket_name)
+        bucket.copy({
+            'Bucket': source_bucket_name,
+            'Key': source_key
+        }, target_file_name)
+    except:
+        error = True
+    else:
+        error = False
+    finally:
+        return error
 
 def main():
     # check for the buckets
