@@ -9,3 +9,5 @@ Defined a function with sql query to get all paths beginning with image and chec
 
 
 for high performance i used s3 client copy() which will support a multipart copy in multiple threads  if necessary 
+
+the credentials used have s3 createbucket,createobject,deletebucket,deleteobject,putbucket,putobject, listbucket,getobject and AWS RDS full access 
