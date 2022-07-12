@@ -4,9 +4,11 @@ import psycopg2
 import os
 s3 = boto3.resource("s3")
 
+#replace with your bucket names 
 legacy_bucket = "legacy-s3-aziz-123"
 production_bucket = "prods3-aziz-123"
 
+#check if bucket exists 
 def bucket_exists(bucket_name: str) -> bool:
     try:
         s3.meta.client.head_bucket(Bucket=bucket_name)
@@ -14,6 +16,7 @@ def bucket_exists(bucket_name: str) -> bool:
     except botocore.exceptions.ClientError as e:
         return False
 
+#check if object exists 
 def object_exists(bucket_name: str, key: str) -> bool:
     try:
         s3.Object(bucket_name, key).load()
@@ -25,6 +28,7 @@ def object_exists(bucket_name: str, key: str) -> bool:
     else:
         return True
 
+#connection to postgres database 
 def get_connection():
     connection = psycopg2.connect(
         database=os.environ.get('MY_DB'),
@@ -56,6 +60,7 @@ def get_connection():
 def close_connection(connection):
     connection.close()
 
+#checking the db for files that still have the legacy path 
 def fetch_files_to_copy(connection) -> list[str]:
     SQL_QUERY = "SELECT id, path_key FROM mytable WHERE path_key LIKE 'image%'"
 
@@ -76,7 +81,7 @@ def fetch_files(connection) -> list[str]:
     # Fetch result
     return cursor.fetchall()
 
-
+#function to copy objects from legacy to production bucket 
 def copy_object(source_bucket_name: str, source_key: str, target_bucket_name: str, target_file_name: str) -> bool:
     error = False
     try:
@@ -92,6 +97,7 @@ def copy_object(source_bucket_name: str, source_key: str, target_bucket_name: st
     finally:
         return error
 
+#updating file path in db 
 def update_file_path_indb(connection, id: str, new_key: str):
     cursor = connection.cursor()
     query = f"""
@@ -155,17 +161,19 @@ def print_bucket_files(bucket_name):
 
 if __name__ == "__main__":
     client = boto3.client("s3")
-
+    #before transfer 
     print(f"{'*'*10}\nFiles in the legacy bucket")
     print_bucket_files(legacy_bucket)
 
     print(f"\n{'*'*10}\nFiles in the production bucket")
     print_bucket_files(production_bucket)
-
+    
+    #executing main function 
     print("\n")
     main()
     print("\n")
 
+    #after transfer 
     print(f"{'*'*10}\nFiles in the legacy bucket")
     print_bucket_files(legacy_bucket)
 
